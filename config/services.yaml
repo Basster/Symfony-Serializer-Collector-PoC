@@ -20,6 +20,7 @@ services:
             - '../src/Entity/'
             - '../src/Kernel.php'
             - '../src/Tests/'
+            - '../src/Serializer/Normalizer/'
 
     # controllers are imported separately to make sure services can be injected
     # as action arguments even if you don't extend any base controller class
@@ -29,3 +30,17 @@ services:
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
+
+    debug.serializer:
+        class: App\Serializer\TraceableSerializer
+        decorates: 'serializer'
+        arguments: ['@debug.serializer.inner']
+
+    App\Serializer\SerializerDataCollector:
+        arguments:
+            $normalizers: !tagged_iterator 'debug.normalizer'
+        tags:
+            -
+                name: data_collector
+                template: data_collector/template.html.twig
+                id: 'serializer.data_collector'
