@@ -10,4 +10,4 @@ PoC of a Symfony Serializer Collector for the Web Debug Toolbar
 
 ## Feedback
 
-Feel free to post some feedback via Issues.
+Feel free to post some feedback on [symfony/symfony#39102](https://github.com/symfony/symfony/issues/39102)
