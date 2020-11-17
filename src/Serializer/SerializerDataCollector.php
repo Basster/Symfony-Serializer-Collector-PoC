@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Serializer;
@@ -8,7 +9,9 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\DataCollector\DataCollector;
 use Symfony\Component\Serializer\SerializerInterface;
+use Symfony\Component\VarDumper\Cloner\Data;
 use Symfony\Contracts\Service\ResetInterface;
+use Throwable;
 
 /**
  * Class NormalizerCollector
@@ -28,32 +31,15 @@ final class SerializerDataCollector extends DataCollector
         $this->normalizers = $normalizers;
     }
 
-    public function collect(Request $request, Response $response, \Throwable $exception = null): void
+    public function collect(Request $request, Response $response, Throwable $exception = null): void
     {
-        $this->data = [
-            'serializations' => [],
-            'deserializations' => [],
-            'normalizations' => [],
-            'denormalizations' => [],
-        ];
+        $this->initData();
 
-        if ($this->serializer instanceof TraceableSerializer) {
-            $this->data['serializations'] = $this->serializer->getSerializations();
-            $this->data['deserializations'] = $this->serializer->getDeserializations();
-        }
+        $this->fillWithSerializerData();
 
-        foreach ($this->normalizers as $normalizer) {
-            if ($normalizer instanceof AbstractTraceableNormalizer) {
-                foreach ($normalizer->getNormalizations() as $denormalization) {
-                    $this->data['normalizations'][] = $denormalization;
-                }
-                foreach ($normalizer->getDenormalizations() as $denormalization) {
-                    $this->data['denormalizations'][] = $denormalization;
-                }
-            }
-        }
+        $this->fillWithNormalizerData();
 
-        $this->data = $this->cloneVar($this->data);
+        $this->finalizeData();
     }
 
     public function getName(): string
@@ -70,23 +56,60 @@ final class SerializerDataCollector extends DataCollector
         }
     }
 
-    public function getSerializations()
+    public function getSerializations(): Data
     {
         return $this->data['serializations'];
     }
 
-    public function getDeserializations()
+    public function getDeserializations(): Data
     {
         return $this->data['deserializations'];
     }
 
-    public function getNormalizations()
+    public function getNormalizations(): Data
     {
         return $this->data['normalizations'];
     }
 
-    public function getDenormalizations()
+    public function getDenormalizations(): Data
     {
         return $this->data['denormalizations'];
+    }
+
+    private function initData(): void
+    {
+        $this->data = [
+            'serializations' => [],
+            'deserializations' => [],
+            'normalizations' => [],
+            'denormalizations' => [],
+        ];
+    }
+
+    private function fillWithSerializerData(): void
+    {
+        if ($this->serializer instanceof TraceableSerializer) {
+            $this->data['serializations'] = $this->serializer->getSerializations();
+            $this->data['deserializations'] = $this->serializer->getDeserializations();
+        }
+    }
+
+    private function fillWithNormalizerData(): void
+    {
+        foreach ($this->normalizers as $normalizer) {
+            if ($normalizer instanceof AbstractTraceableNormalizer) {
+                foreach ($normalizer->getNormalizations() as $denormalization) {
+                    $this->data['normalizations'][] = $denormalization;
+                }
+                foreach ($normalizer->getDenormalizations() as $denormalization) {
+                    $this->data['denormalizations'][] = $denormalization;
+                }
+            }
+        }
+    }
+
+    private function finalizeData(): void
+    {
+        $this->data = $this->cloneVar($this->data);
     }
 }

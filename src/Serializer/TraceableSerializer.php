@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Serializer;
@@ -14,6 +15,7 @@ final class TraceableSerializer implements SerializerInterface, ResetInterface
 {
     private array $serializations = [];
     private array $deserializations = [];
+
     /**
      * @var SerializerInterface
      */
@@ -58,8 +60,9 @@ final class TraceableSerializer implements SerializerInterface, ResetInterface
         return $this->deserializations;
     }
 
-    public function reset()
+    public function reset(): void
     {
-        // TODO: Implement reset() method.
+        $this->serializations = [];
+        $this->deserializations = [];
     }
 }
